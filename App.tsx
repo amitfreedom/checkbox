@@ -1,118 +1,153 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import SelectionItems from './src/SelectionItems';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const App = () => {
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const [users, setUsers] = useState<[]>([]);
+  const [showCheckBox, setShowCheckBox] = useState<boolean>(false);
+  const [selectedUsers, setSelectedUsers] = useState<[]>([]);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const getData = () => {
+    fetch("https://jsonplaceholder.typicode.com/users").then(res => res.json()).then(data => {
+      console.log(data);
+      data.map((item: { isSelected: boolean})=>{
+        item.isSelected=false;
+      });
+      setUsers(data);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+    })
+  }
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const onSelect = (ind:Number)=>{
+
+    let temp = users;
+    temp.map((item,index)=>{
+      if(index==ind){
+        item.isSelected = !item.isSelected;
+      }
+    });
+
+    let tempData = [];
+    temp.map((item)=>{
+      tempData.push(item);
+    });
+
+    setUsers(tempData);
+  }
+
+  const selectAll = () =>{
+    let temp = users;
+    temp.map((item,index)=>{
+        item.isSelected = true;
+      
+    });
+
+    let tempData = [];
+    temp.map((item)=>{
+      tempData.push(item);
+    });
+
+    setUsers(tempData);
+
+  }
+
+  const clearAll = () =>{
+    let temp = users;
+    temp.map((item,index)=>{
+        item.isSelected = false;
+      
+    });
+
+    let tempData = [];
+    temp.map((item)=>{
+      tempData.push(item);
+    });
+
+    setUsers(tempData);
+  }
+
+  const getCount = ()=>{
+    let temp = users;
+    let tempData = [];
+    temp.map((item,index)=>{
+        if (item.isSelected) {
+          tempData.push(item);
+          selectedUsers.push(item.id);
+        }
+    });
+
+    console.log(temp,"<<<<<<");
+    
+
+    return tempData?.length;
+  }
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+    <SafeAreaView>
+      {
+        showCheckBox && 
+        <View style={styles.selectAll}>
+          <TouchableOpacity onPress={()=>{
+            clearAll();
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+            <Image source={require('./src/images/close.png')} style={{width:30,height:30,}}/>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={()=>{
+            selectAll();
+          }}>
+            <Text style={{borderRadius:8,borderWidth:1,padding:10,marginLeft:20}}>Select All</Text>
+          </TouchableOpacity>
+
+          <Text style={{marginLeft:20,fontSize:14}}>{`Selected(${getCount()}) Items`}</Text>
+
         </View>
-      </ScrollView>
+      }
+      <View>
+        <Text>{selectedUsers.toString()}</Text>
+      </View>
+      <FlatList
+        data={users}
+        renderItem={({ item, index }) => {
+          return (
+            <SelectionItems item={item} onLongPress={() => {
+                if(showCheckBox){
+                  setShowCheckBox(false);
+                  clearAll();
+                }else{
+                  setShowCheckBox(true);
+
+                }
+             }} onSelect={() => { 
+              onSelect(index)
+             }}
+             isCheckbox={showCheckBox}
+             />
+          )
+        }}
+
+      />
+
     </SafeAreaView>
-  );
+  )
 }
+
+export default App
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+  selectAll:{
+    width:'100%',
+    flexDirection:'row',
+    height:60,
+    marginTop:10,
+    marginBottom:50,
+    alignItems:'center',
+    marginLeft:20
 
-export default App;
+  }
+})
